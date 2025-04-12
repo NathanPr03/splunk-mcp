@@ -7,10 +7,9 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	_ "github.com/mark3labs/mcp-go/mcp"
 	"github.com/zmb3/spotify/v2"
-	spotifyauth "github.com/zmb3/spotify/v2/auth"
 	"log"
+	"spotify-mcp/internal/client"
 	"spotify-mcp/internal/server/tools"
-	"spotify-mcp/internal/token"
 )
 
 const playListName = "Playlist Name"
@@ -45,15 +44,7 @@ func searchBehaviour(ctx context.Context, request mcp.CallToolRequest) (*mcp.Cal
 		return nil, fmt.Errorf("failed to get playlist name: %w", err)
 	}
 
-	accessToken, err := token.GetToken(ctx)
-	if err != nil {
-		log.Fatalf("couldn't get token: %v", err)
-	}
-
-	httpClient := spotifyauth.New().Client(ctx, accessToken)
-	client := spotify.New(httpClient)
-
-	results, err := client.Search(ctx, playlistName, spotify.SearchTypePlaylist|spotify.SearchTypeAlbum)
+	results, err := client.SpotifyClient.Search(ctx, playlistName, spotify.SearchTypePlaylist|spotify.SearchTypeAlbum)
 	if err != nil {
 		log.Fatal(err)
 	}
