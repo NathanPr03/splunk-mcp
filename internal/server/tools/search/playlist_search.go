@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/mark3labs/mcp-go/mcp"
 	_ "github.com/mark3labs/mcp-go/mcp"
@@ -57,14 +58,17 @@ func searchBehaviour(ctx context.Context, request mcp.CallToolRequest) (*mcp.Cal
 		log.Fatal(err)
 	}
 
-	allPlaylistNames := ""
+	jsonPlaylists := ""
 	if results.Playlists != nil {
-		fmt.Println("Playlists:")
-		for _, item := range results.Playlists.Playlists {
-			allPlaylistNames += item.Name + "\n"
+		bytePlaylists, err := json.Marshal(results.Playlists)
+		if err != nil {
+			log.Fatal(err)
 		}
+
+		jsonPlaylists = string(bytePlaylists)
 	}
 
-	mcpResult := mcp.NewToolResultText(allPlaylistNames)
+	mcpResult := mcp.NewToolResultText(jsonPlaylists)
+
 	return mcpResult, nil
 }
