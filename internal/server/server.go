@@ -13,7 +13,7 @@ func StartMcpServer() {
 		"1.0.0",
 	)
 
-	tools := search.PlayListSearchTools()
+	tools := search.GetSearchTools()
 	for _, tool := range tools {
 		s.AddTool(tool.ToolDefinition, tool.ToolBehaviour)
 	}
