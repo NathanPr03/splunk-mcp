@@ -1,2 +1,2 @@
-# splunk-mcp
-MCP Server for Interfacing with Splunk
+# spotify-mcp
+MCP Server for Interfacing with Spotify
