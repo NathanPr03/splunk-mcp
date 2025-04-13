@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"github.com/joho/godotenv"
 	"spotify-mcp/internal/client"
 	"spotify-mcp/internal/server"
@@ -10,7 +9,7 @@ import (
 func main() {
 	godotenv.Load()
 
-	client.InstantiateSpotifyClient(context.Background())
+	client.InstantiateSpotifyClient()
 
 	server.StartMcpServer()
 }

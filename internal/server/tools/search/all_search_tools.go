@@ -2,7 +2,7 @@ package search
 
 import "spotify-mcp/internal/server/tools"
 
-func GetSearchTools() []tools.ToolEntry {
+func SearchTools() []tools.ToolEntry {
 	allTools := append(PlayListSearchTools(), SongSearchTools()...)
 	return allTools
 }

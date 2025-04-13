@@ -2,6 +2,7 @@ package tools
 
 import (
 	"errors"
+	"fmt"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -17,4 +18,18 @@ func GetParamFromRequest(request mcp.CallToolRequest, paramToSearchFor string) (
 	}
 
 	return paramStr, nil
+}
+
+func GetBoolParamFromRequest(request mcp.CallToolRequest, paramName string) (bool, error) {
+	param, ok := request.Params.Arguments[paramName]
+	if !ok {
+		return false, fmt.Errorf("parameter %s not provided", paramName)
+	}
+
+	boolVal, ok := param.(bool)
+	if !ok {
+		return false, fmt.Errorf("parameter %s is not a boolean", paramName)
+	}
+
+	return boolVal, nil
 }
