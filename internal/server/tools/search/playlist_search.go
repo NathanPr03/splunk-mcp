@@ -12,7 +12,7 @@ import (
 	"spotify-mcp/internal/server/tools"
 )
 
-const playlistParameterName = "Playlist Name"
+const playlsitOrAlbumNameParameter = "Playlist Name"
 
 func PlayListSearchTools() []tools.ToolEntry {
 	return []tools.ToolEntry{
@@ -22,11 +22,11 @@ func PlayListSearchTools() []tools.ToolEntry {
 
 func simplePlaylistSearch() tools.ToolEntry {
 	toolDefinition := mcp.NewTool(
-		"simple_playlist_search",
-		mcp.WithDescription("Search for a playlist by name"),
-		mcp.WithString(playlistParameterName,
+		"simple_playlist_and_album_search",
+		mcp.WithDescription("Search for a playlist or album by name"),
+		mcp.WithString(playlsitOrAlbumNameParameter,
 			mcp.Required(),
-			mcp.Description("Name of the playlist to search for. Extra information: "+SearchQueryInformation),
+			mcp.Description("Name of the playlist or album to search for. Extra information: "+SearchQueryInformation),
 		),
 	)
 
@@ -39,7 +39,7 @@ func simplePlaylistSearch() tools.ToolEntry {
 }
 
 func playlistSearchBehaviour(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	playlistName, err := tools.GetParamFromRequest(request, playlistParameterName)
+	playlistName, err := tools.GetParamFromRequest(request, playlsitOrAlbumNameParameter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get playlist name: %w", err)
 	}
