@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/zmb3/spotify/v2"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 	"log"
@@ -23,7 +24,7 @@ var (
 	playbackAuth  *spotifyauth.Authenticator
 	authComplete  = make(chan struct{})
 	serverRunning bool
-	state         = "abc123"
+	state         string
 	authMutex     sync.Mutex
 	httpServer    *http.Server
 )
@@ -43,10 +44,16 @@ func InstantiateSpotifyClient(ctx context.Context) {
 			spotifyauth.ScopeUserReadCurrentlyPlaying,
 			spotifyauth.ScopeUserReadPlaybackState,
 			spotifyauth.ScopeUserModifyPlaybackState,
+			spotifyauth.ScopePlaylistModifyPublic,
+			spotifyauth.ScopePlaylistModifyPrivate,
+			spotifyauth.ScopePlaylistReadCollaborative,
+			spotifyauth.ScopePlaylistReadPrivate,
 		),
 		spotifyauth.WithClientID(os.Getenv("SPOTIFY_CLIENT_ID")),
 		spotifyauth.WithClientSecret(os.Getenv("SPOTIFY_CLIENT_SECRET")),
 	)
+
+	state = uuid.NewString()
 }
 
 func InitiateAuth() (string, error) {

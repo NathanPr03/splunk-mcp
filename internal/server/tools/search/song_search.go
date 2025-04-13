@@ -51,17 +51,17 @@ func songSearchBehaviour(ctx context.Context, request mcp.CallToolRequest) (*mcp
 		log.Fatal(err)
 	}
 
-	jsonPlaylists := ""
+	jsonTracks := ""
 	if results.Tracks != nil {
-		bytePlaylists, err := json.Marshal(results.Tracks.Tracks)
+		byteTracks, err := json.Marshal(results.Tracks.Tracks)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		jsonPlaylists = string(bytePlaylists)
+		jsonTracks = string(byteTracks)
 	}
 
-	mcpResult := mcp.NewToolResultText(jsonPlaylists)
+	mcpResult := mcp.NewToolResultText(jsonTracks)
 
 	return mcpResult, nil
 }

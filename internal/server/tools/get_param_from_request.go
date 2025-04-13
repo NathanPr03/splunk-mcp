@@ -33,3 +33,16 @@ func GetBoolParamFromRequest(request mcp.CallToolRequest, paramName string) (boo
 
 	return boolVal, nil
 }
+
+func GetIntParamFromRequest(request mcp.CallToolRequest, paramName string) (int, error) {
+	param, ok := request.Params.Arguments[paramName]
+	if !ok {
+		return 0, fmt.Errorf("parameter %s not provided", paramName)
+	}
+	intVal, ok := param.(int)
+	if !ok {
+		return 0, fmt.Errorf("parameter %s is not an integer", paramName)
+	}
+
+	return intVal, nil
+}

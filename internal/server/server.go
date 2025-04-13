@@ -5,6 +5,7 @@ import (
 	mcpServer "github.com/mark3labs/mcp-go/server"
 	"os"
 	"spotify-mcp/internal/server/tools/playback"
+	"spotify-mcp/internal/server/tools/playlist"
 	"spotify-mcp/internal/server/tools/search"
 )
 
@@ -16,6 +17,7 @@ func StartMcpServer() {
 
 	tools := search.SearchTools()
 	tools = append(tools, playback.PlayerTools()...)
+	tools = append(tools, playlist.PlaylistTools()...)
 	for _, tool := range tools {
 		s.AddTool(tool.ToolDefinition, tool.ToolBehaviour)
 	}
