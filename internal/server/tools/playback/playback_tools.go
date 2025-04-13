@@ -58,12 +58,11 @@ func loginBehaviour(ctx context.Context, request mcp.CallToolRequest) (*mcp.Call
 	}
 
 	return mcp.NewToolResultText(fmt.Sprintf(
-		"Please authenticate with Spotify by opening this URL in your browser:\n%s\n\nAfter logging in, you'll be redirected to complete the authentication. Once completed, you can use the other Spotify tools.",
+		"Please authenticate with Spotify by opening this URL in your browser:\n%s\n\nAfter logging in, you'll be redirected to complete the authentication. Once completed, you can use the other Spotify tools. Please show this link directly to the end user.",
 		authURL,
 	)), nil
 }
 
-// Check auth status tool
 func currentTrackTool() tools.ToolEntry {
 	toolDefinition := mcp.NewTool(
 		"current_track",
@@ -81,7 +80,7 @@ func currentTrackBehaviour(ctx context.Context, request mcp.CallToolRequest) (*m
 		return mcp.NewToolResultText("Not authenticated with Spotify. Please use the spotify_login tool first."), nil
 	}
 
-	currentlyPlaying, err := client.SpotifyClient.PlayerCurrentlyPlaying(ctx)
+	currentlyPlaying, err := client.AuthenticatedSpotifyClient.PlayerCurrentlyPlaying(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get currently playing track: %w", err)
 	}
@@ -112,7 +111,6 @@ func currentTrackBehaviour(ctx context.Context, request mcp.CallToolRequest) (*m
 	return mcp.NewToolResultText(response), nil
 }
 
-// Play tool
 func playTool() tools.ToolEntry {
 	toolDefinition := mcp.NewTool(
 		"play",
@@ -130,7 +128,7 @@ func playBehaviour(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallT
 		return mcp.NewToolResultText("Not authenticated with Spotify. Please use the spotify_login tool first."), nil
 	}
 
-	err := client.SpotifyClient.Play(ctx)
+	err := client.AuthenticatedSpotifyClient.Play(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start playback: %w", err)
 	}
@@ -156,7 +154,7 @@ func pauseBehaviour(ctx context.Context, request mcp.CallToolRequest) (*mcp.Call
 		return mcp.NewToolResultText("Not authenticated with Spotify. Please use the spotify_login tool first."), nil
 	}
 
-	err := client.SpotifyClient.Pause(ctx)
+	err := client.AuthenticatedSpotifyClient.Pause(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to pause playback: %w", err)
 	}
@@ -164,7 +162,6 @@ func pauseBehaviour(ctx context.Context, request mcp.CallToolRequest) (*mcp.Call
 	return mcp.NewToolResultText("Playback paused"), nil
 }
 
-// Next Track tool
 func nextTrackTool() tools.ToolEntry {
 	toolDefinition := mcp.NewTool(
 		"next_track",
@@ -182,7 +179,7 @@ func nextTrackBehaviour(ctx context.Context, request mcp.CallToolRequest) (*mcp.
 		return mcp.NewToolResultText("Not authenticated with Spotify. Please use the spotify_login tool first."), nil
 	}
 
-	err := client.SpotifyClient.Next(ctx)
+	err := client.AuthenticatedSpotifyClient.Next(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to skip to next track: %w", err)
 	}
@@ -190,7 +187,6 @@ func nextTrackBehaviour(ctx context.Context, request mcp.CallToolRequest) (*mcp.
 	return mcp.NewToolResultText("Skipped to next track"), nil
 }
 
-// Previous Track tool
 func previousTrackTool() tools.ToolEntry {
 	toolDefinition := mcp.NewTool(
 		"previous_track",
@@ -208,7 +204,7 @@ func previousTrackBehaviour(ctx context.Context, request mcp.CallToolRequest) (*
 		return mcp.NewToolResultText("Not authenticated with Spotify. Please use the spotify_login tool first."), nil
 	}
 
-	err := client.SpotifyClient.Previous(ctx)
+	err := client.AuthenticatedSpotifyClient.Previous(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to skip to previous track: %w", err)
 	}
@@ -216,7 +212,6 @@ func previousTrackBehaviour(ctx context.Context, request mcp.CallToolRequest) (*
 	return mcp.NewToolResultText("Skipped to previous track"), nil
 }
 
-// Shuffle tool
 func shuffleTool() tools.ToolEntry {
 	toolDefinition := mcp.NewTool(
 		"shuffle",
@@ -243,7 +238,7 @@ func shuffleBehaviour(ctx context.Context, request mcp.CallToolRequest) (*mcp.Ca
 		return nil, fmt.Errorf("failed to get shuffle state parameter: %w", err)
 	}
 
-	err = client.SpotifyClient.Shuffle(ctx, shuffleState)
+	err = client.AuthenticatedSpotifyClient.Shuffle(ctx, shuffleState)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set shuffle state: %w", err)
 	}

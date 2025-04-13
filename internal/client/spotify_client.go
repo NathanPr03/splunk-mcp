@@ -17,11 +17,10 @@ var (
 	// SpotifyClient Basic client for search functionality
 	SpotifyClient *spotify.Client
 
-	// AuthenticatedClient Client with playback permissions
-	AuthenticatedClient *spotify.Client
+	// AuthenticatedSpotifyClient Client with playback permissions
+	AuthenticatedSpotifyClient *spotify.Client
 
 	playbackAuth  *spotifyauth.Authenticator
-	initOnce      sync.Once
 	authComplete  = make(chan struct{})
 	serverRunning bool
 	state         = "abc123"
@@ -54,7 +53,7 @@ func InitiateAuth() (string, error) {
 	authMutex.Lock()
 	defer authMutex.Unlock()
 
-	if AuthenticatedClient == nil {
+	if AuthenticatedSpotifyClient == nil {
 		authComplete = make(chan struct{})
 	}
 
@@ -99,7 +98,7 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	AuthenticatedClient = spotify.New(playbackAuth.Client(r.Context(), tok))
+	AuthenticatedSpotifyClient = spotify.New(playbackAuth.Client(r.Context(), tok))
 
 	w.Header().Set("Content-Type", "text/html")
 	html := `
@@ -107,7 +106,7 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
     <body>
         <h1>Authentication Successful</h1>
         <p>You have successfully authenticated with Spotify.</p>
-        <p>You can now close this browser window and return to your conversation with Claude.</p>
+        <p>You can now close this browser window and return to your MCP host.</p>
     </body>
     </html>
     `
@@ -122,7 +121,7 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 }
 
 func IsPlaybackAuthenticated() bool {
-	return AuthenticatedClient != nil
+	return AuthenticatedSpotifyClient != nil
 }
 
 func WaitForAuthentication() {
