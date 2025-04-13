@@ -2,70 +2,91 @@ package client
 
 import (
 	"context"
-	"fmt"
-	"github.com/joho/godotenv"
 	"github.com/zmb3/spotify/v2"
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 	"log"
 	"net/http"
 	"os"
+	"spotify-mcp/internal/token"
 	"sync"
 )
 
 const redirectURI = "http://127.0.0.1:1690/callback"
 
 var (
-	SpotifyClient  *spotify.Client
-	playerState    *spotify.PlayerState
-	auth           *spotifyauth.Authenticator
-	clientInitOnce sync.Once
-	authComplete   = make(chan struct{})
-	state          = "abc123"
+	// SpotifyClient Basic client for search functionality
+	SpotifyClient *spotify.Client
+
+	// AuthenticatedClient Client with playback permissions
+	AuthenticatedClient *spotify.Client
+
+	playbackAuth  *spotifyauth.Authenticator
+	initOnce      sync.Once
+	authComplete  = make(chan struct{})
+	serverRunning bool
+	state         = "abc123"
+	authMutex     sync.Mutex
+	httpServer    *http.Server
 )
 
-func InstantiateSpotifyClient() {
-	clientInitOnce.Do(func() {
-		err := godotenv.Load()
-		if err != nil {
-			log.Printf("Error loading .env file: %v", err)
+func InstantiateSpotifyClient(ctx context.Context) {
+	accessToken, err := token.GetToken(ctx)
+	if err != nil {
+		log.Fatalf("couldn't get token: %v", err)
+	}
+
+	httpClient := spotifyauth.New().Client(ctx, accessToken)
+	SpotifyClient = spotify.New(httpClient)
+
+	playbackAuth = spotifyauth.New(
+		spotifyauth.WithRedirectURL(redirectURI),
+		spotifyauth.WithScopes(
+			spotifyauth.ScopeUserReadCurrentlyPlaying,
+			spotifyauth.ScopeUserReadPlaybackState,
+			spotifyauth.ScopeUserModifyPlaybackState,
+		),
+		spotifyauth.WithClientID(os.Getenv("SPOTIFY_CLIENT_ID")),
+		spotifyauth.WithClientSecret(os.Getenv("SPOTIFY_CLIENT_SECRET")),
+	)
+}
+
+func InitiateAuth() (string, error) {
+	authMutex.Lock()
+	defer authMutex.Unlock()
+
+	if AuthenticatedClient == nil {
+		authComplete = make(chan struct{})
+	}
+
+	if !serverRunning {
+		startAuthServer()
+	}
+
+	return playbackAuth.AuthURL(state), nil
+}
+
+func startAuthServer() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/callback", completeAuth)
+
+	httpServer = &http.Server{
+		Addr:    ":1690",
+		Handler: mux,
+	}
+
+	go func() {
+		serverRunning = true
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("HTTP server error: %v", err)
 		}
+		serverRunning = false
+	}()
 
-		auth = spotifyauth.New(
-			spotifyauth.WithRedirectURL(redirectURI),
-			spotifyauth.WithScopes(
-				spotifyauth.ScopeUserReadCurrentlyPlaying,
-				spotifyauth.ScopeUserReadPlaybackState,
-				spotifyauth.ScopeUserModifyPlaybackState,
-			),
-			spotifyauth.WithClientID(os.Getenv("SPOTIFY_CLIENT_ID")),
-			spotifyauth.WithClientSecret(os.Getenv("SPOTIFY_CLIENT_SECRET")),
-		)
-
-		http.HandleFunc("/callback", completeAuth)
-
-		go func() {
-			log.Println("Starting HTTP server for Spotify authentication")
-			if err := http.ListenAndServe(":1690", nil); err != nil {
-				log.Fatalf("HTTP server error: %v", err)
-			}
-		}()
-
-		url := auth.AuthURL(state)
-		fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
-
-		<-authComplete
-
-		playerState, err = SpotifyClient.PlayerState(context.Background())
-		if err != nil {
-			log.Printf("Warning: Could not get player state: %v", err)
-		} else {
-			log.Printf("Connected to Spotify device: %s (%s)", playerState.Device.Type, playerState.Device.Name)
-		}
-	})
+	log.Println("Started authentication server on port 1690")
 }
 
 func completeAuth(w http.ResponseWriter, r *http.Request) {
-	tok, err := auth.Token(r.Context(), state, r)
+	tok, err := playbackAuth.Token(r.Context(), state, r)
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
 		log.Printf("Authentication error: %v", err)
@@ -78,18 +99,32 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	SpotifyClient = spotify.New(auth.Client(r.Context(), tok))
+	AuthenticatedClient = spotify.New(playbackAuth.Client(r.Context(), tok))
 
-	fmt.Fprintf(w, "Login Completed! You can now close this window and return to the application.")
-
+	w.Header().Set("Content-Type", "text/html")
+	html := `
+    <html>
+    <body>
+        <h1>Authentication Successful</h1>
+        <p>You have successfully authenticated with Spotify.</p>
+        <p>You can now close this browser window and return to your conversation with Claude.</p>
+    </body>
+    </html>
+    `
+	w.Write([]byte(html))
 	close(authComplete)
+
+	go func() {
+		if err := httpServer.Shutdown(context.Background()); err != nil {
+			log.Printf("HTTP server shutdown error: %v", err)
+		}
+	}()
 }
 
-func GetCurrentPlayerState(ctx context.Context) (*spotify.PlayerState, error) {
-	state, err := SpotifyClient.PlayerState(ctx)
-	if err != nil {
-		return nil, err
-	}
-	playerState = state
-	return state, nil
+func IsPlaybackAuthenticated() bool {
+	return AuthenticatedClient != nil
+}
+
+func WaitForAuthentication() {
+	<-authComplete
 }
