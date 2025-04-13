@@ -18,6 +18,7 @@ func StartMcpServer() {
 	tools := search.SearchTools()
 	tools = append(tools, playback.PlayerTools()...)
 	tools = append(tools, playlist.PlaylistTools()...)
+	tools = append(tools, playback.QueueTools()...)
 	for _, tool := range tools {
 		s.AddTool(tool.ToolDefinition, tool.ToolBehaviour)
 	}
