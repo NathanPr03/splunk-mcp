@@ -12,6 +12,7 @@ This project provides a set of MCP tools that enable AI assistants to:
 - Create and modify playlists
 - Toggle shuffle mode
 - View currently playing tracks
+- Add tracks to the queue
 
 Built on top of the [Model Context Protocol](https://modelcontextprotocol.io/) and [zmb3/spotify](https://github.com/zmb3/spotify) Golang SDK.
 
@@ -26,7 +27,7 @@ MCP works like a USB-C port for AI applications - providing a standardized way t
 ### Prerequisites
 
 1. Go 1.18 or higher
-2. A Spotify account
+2. A Spotify account (you will need Spotify Premium for playback control)
 3. Spotify Developer credentials
 
 ### Getting Spotify API Credentials
